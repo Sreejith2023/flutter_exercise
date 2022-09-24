@@ -6,6 +6,9 @@ import 'package:get/get.dart';
 
 class HomeScreen extends GetView<HomeController> {
   final searchController = TextEditingController();
+
+  HomeScreen({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -13,100 +16,146 @@ class HomeScreen extends GetView<HomeController> {
         appBar: _appBar(),
         body: RefreshIndicator(
           onRefresh: _refreshPage,
-          child: listWidget(),
+          child: homeBody(),
         ),
       ),
     );
   }
 
-  listWidget() {
+  //Home page widgets rendering
+  homeBody() {
     return Obx(() {
-      return controller.isLoading.value? progressWidget():controller.getFilteredListData().length>0?ListView.builder(
-          itemCount: controller.getFilteredListData().length,
-          itemBuilder: (BuildContext context, int index) {
-            return Card(
-              margin: EdgeInsets.all(8),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: [
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      margin: EdgeInsets.symmetric(vertical: 5),
-                      child:
-                          Text("Title : ${controller.getFilteredListData()[index].title!}"),
-                    ),
-                    Container(
-                        alignment: Alignment.centerLeft,
-                        margin: EdgeInsets.symmetric(vertical: 5),
-                        child: Text(
-                            "Description : ${controller.getFilteredListData()[index].description!}")),
-                    CachedNetworkImage(
-                      imageUrl: controller.getFilteredListData()[index].imageHref!,
-                      // imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/American_Beaver.jpg/220px-American_Beaver.jpg',
-                      placeholder: (context, url) => Image(
-                          image: AssetImage('asset/images/ic_profile.png')),
-                      errorWidget: (context, url, error) => Image(
-                          image: AssetImage('asset/images/ic_profile.png')),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }):noDataWidget();
+      return controller.isLoading.value
+          ? progressWidget()
+          : controller.getFilteredListData().isNotEmpty
+              ? listItems()
+              : noDataWidget();
     });
   }
 
-  Widget progressWidget(){
-    return const Center(child: CircularProgressIndicator(),);
+  //list of items widget
+  Widget listItems() {
+    return ListView.builder(
+        itemCount: controller.getFilteredListData().length,
+        itemBuilder: (BuildContext context, int index) {
+          return Card(
+            margin: EdgeInsets.all(8),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  itemRowTitle(index),
+                  itemRowDescription(index),
+                  itemRowImage(index),
+                ],
+              ),
+            ),
+          );
+        });
   }
 
-  Widget noDataWidget(){
-    return const Center(child: Text("No Data"),);
+  //Each list item title widget
+  Widget itemRowTitle(int index) {
+    return Container(
+      alignment: Alignment.centerLeft,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: Text("Title : ${controller.getFilteredListData()[index].title!}"),
+    );
   }
 
+  //Each list item description widget
+  Widget itemRowDescription(int index) {
+    return Container(
+      alignment: Alignment.centerLeft,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: Text(
+          "Description : ${controller.getFilteredListData()[index].description!}"),
+    );
+  }
+
+  //Each list item image widget
+  Widget itemRowImage(int index) {
+    return CachedNetworkImage(
+      imageUrl: controller.getFilteredListData()[index].imageHref!,
+      placeholder: (context, url) =>
+          const Image(image: AssetImage('asset/images/ic_profile.png')),
+      errorWidget: (context, url, error) =>
+          const Image(image: AssetImage('asset/images/ic_profile.png')),
+    );
+  }
+
+  //progress indicator widget while fetching data
+  Widget progressWidget() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  //no data widget to show when the list is empty
+  Widget noDataWidget() {
+    return const Center(
+      child: Text("No Data"),
+    );
+  }
+
+  //code to invoke while swiping in pull refresh
   Future<void> _refreshPage() async {
     controller.getHomeData(false);
   }
 
+  //Appbar widgets
   AppBar _appBar() {
     return AppBar(
       centerTitle: true,
       toolbarHeight: 100,
       flexibleSpace: Column(
         children: [
-          Container(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              child: Obx((){
-                return Text(
-                  controller.title.value,
-                  style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black),
-                );
-              })),
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.blueAccent),
-                borderRadius: BorderRadius.all(Radius.circular(8))),
-            child: TextField(
-              controller: searchController,
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Search Title Here...',
-              ),
-              onChanged: (value){
-                controller.filteredList.value.clear();
-                controller.filteredList.refresh();
-                controller.filterResponse(value);
-              },
-            ),
-          ),
+          pageTitle(),
+          searchWidget(),
         ],
+      ),
+    );
+  }
+
+  //Appbar title
+  Widget pageTitle() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Obx(() {
+        return Text(
+          controller.title.value,
+          style: const TextStyle(
+              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+        );
+      }),
+    );
+  }
+
+  //Search widget in appbar
+  Widget searchWidget() {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        vertical: 5,
+        horizontal: 8,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+      ),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.blueAccent),
+          borderRadius: const BorderRadius.all(Radius.circular(8))),
+      child: TextField(
+        controller: searchController,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          hintText: 'Search Title Here...',
+        ),
+        onChanged: (value) {
+          controller.filteredList.value.clear();
+          controller.filteredList.refresh();
+          controller.filterResponse(value);
+        },
       ),
     );
   }
