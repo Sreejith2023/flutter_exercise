@@ -5,7 +5,7 @@ class RemoteResponseModel {
   RemoteResponseModel({this.title, this.rows});
 
   RemoteResponseModel.fromJson(Map<String, dynamic> json) {
-    title = json['title'];
+    title = json['title']??"N/A";
     if (json['rows'] != null) {
       rows = <Rows>[];
       json['rows'].forEach((v) {
@@ -32,9 +32,9 @@ class Rows {
   Rows({this.title, this.description, this.imageHref});
 
   Rows.fromJson(Map<String, dynamic> json) {
-    title = json['title'];
-    description = json['description'];
-    imageHref = json['imageHref'];
+    title = json['title']??"N/A";
+    description = json['description']??"N/A";
+    imageHref = json['imageHref']??"N/A";
   }
 
   Map<String, dynamic> toJson() {
